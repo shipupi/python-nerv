@@ -1,4 +1,5 @@
 # In[1]:
+import csv
 import mne
 mne.set_log_level('WARNING')
 
@@ -46,7 +47,6 @@ mat = scipy.io.loadmat('./dataset/p300-subject-25.mat')
 # In[1]:
 
 # coding: latin-1
-# Data point zero for the eight channels.  Should be in V.
 signal = mat['data'][0][0][0] 
 #* pow(10,6)
 
@@ -76,17 +76,17 @@ info_events = mne.create_info(ch_names_events,250, ch_types_events)
 eeg = mne.io.RawArray(signal_events.T, info_events)
 
 # Do some basic signal processing (1-20 band pass filter)
-fig=eeg.plot_psd()
+# fig=eeg.plot_psd()
 
 eeg.filter(1,20)
 
-fig=eeg.plot_psd()
+# fig=eeg.plot_psd()
 
 event_times = mne.find_events(eeg, stim_channel='t_type')    
 
 
 
-eeg.plot(scalings='auto',n_channels=8,events=event_times,block=True)   # scalings=10e-05
+# eeg.plot(scalings='auto',n_channels=8,events=event_times,block=True)   # scalings=10e-05
 
 # In[1]
 if (np.unique(t_flash[:,0]).shape[0] != 4200):
@@ -152,13 +152,13 @@ def getlabels(eeg_mne, eeg_events, event_id):
 epochs, labels = getlabels(eeg, eeg, {'first':1})
 
 epocked = epochs.average()
-epocked.plot(window_title='NoHit Averaged Signals')
+# epocked.plot(window_title='NoHit Averaged Signals')
 
 
 epochs, labels = getlabels(eeg, eeg, {'second':2})
 
 epocked = epochs.average()
-epocked.plot(window_title='Hit Averaged Signals')
+# epocked.plot(window_title='Hit Averaged Signals')
 
 epochs, labels = getlabels(eeg, eeg, { 'first':1, 'second':2})
 
@@ -292,9 +292,16 @@ def getaverageepoch(singleepoch):
     '''
     Build the epochs based on each stimulation (1-12), and put all the epochs togheter.
     '''
+    f = open('experiment.csv', 'w+')
+    writer = csv.writer(f)
     for trial in range(0,35):
         epochstrial = singleepoch[0+repetitions*trial:repetitions*trial+repetitions]
-
+        # Brian: ACa exportas las imagene
+        # Tamanio: 10 x 10 x 201
+        # Primer indice: Repeticion
+        # Segundo indice: Canal
+        # Tercer indice: Tiempo (sampleado?)
+        
         epochr1 = epochstrial['Row1']
         epochr2 = epochstrial['Row2']
         epochr3 = epochstrial['Row3']
@@ -308,6 +315,13 @@ def getaverageepoch(singleepoch):
         epochc4 = epochstrial['Col4']
         epochc5 = epochstrial['Col5']
         epochc6 = epochstrial['Col6']
+
+        np.set_printoptions(suppress=True)
+        for r in ['Row', 'Col']:
+            for n in range(1,7):
+                for i in epochstrial["{}{}".format(r,n)].get_data().flatten(): 
+                    writer.writerow([i])
+        exit()
 
         if (trial==0):
             epochs_data = np.array([epochr1.average().data])
@@ -399,32 +413,32 @@ for trial in range(15,35):
     hpreds.append( (r,c) )
 
 # In[1]: 
-for i in range(15,35):
-    print(SpellMeLetter(hlbls[i][0],hlbls[i][1]),end='')
+# for i in range(15,35):
+    # print(SpellMeLetter(hlbls[i][0],hlbls[i][1]),end='')
 
-print()
+# print()
 
 # In[1]: 
-for i in range(15,35):
-    print(SpellMeLetter(hpreds[i-15][0],hpreds[i-15][1]),end='')
+# for i in range(15,35):
+    # print(SpellMeLetter(hpreds[i-15][0],hpreds[i-15][1]),end='')
 
-print()
+# print()
 
 
 # %%
-for i in range(0,12):
-    plt.figure(figsize=(9, 3))
-    plt.plot(eeg_data[i])
-    plt.show()
+# for i in range(0,12):
+    # plt.figure(figsize=(9, 3))
+    # plt.plot(eeg_data[i])
+    # plt.show()
 # %%
 
 # Classification report
 target_names = ['nohit', 'hit']
 
 report = classification_report(classlabels[test], clf.predict(X[test]), target_names=target_names)
-print(report)
+# print(report)
 
 cm = confusion_matrix(classlabels[test], clf.predict(X[test]) )
-print (cm)
+# print (cm)
 cm_normalized = cm.astype(float) / cm.sum(axis=1)[:, np.newaxis]
 acc=(cm[0,0]+cm[1,1])*1.0/(np.sum(cm))
